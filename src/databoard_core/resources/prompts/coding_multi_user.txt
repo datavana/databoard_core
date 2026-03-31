@@ -1,0 +1,9 @@
+The following text must be classified in all the categories defined in the codebook below.
+Return one line per category. Nothing else, no introduction, no explanation, no disclaimer!
+
+# Code Book:
+{{rules}}
+
+
+# Text to classify:
+{{text}}

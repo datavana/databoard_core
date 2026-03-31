@@ -1,0 +1,8 @@
+# Selection rules:
+{{rules}}
+
+The following text must be summarized for each of the selection rules defined above.
+Return only the lines with the selection rule name and the summaries - no introduction, no explanation, no disclaimer!
+
+# Text to summarize:
+{{text}}

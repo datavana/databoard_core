@@ -1,0 +1,10 @@
+The following text needs to be classified into one of the categories defined in the codebook below.
+Please carefully read the text and determine the most suitable category.
+Only return the category name and nothing else.
+
+Code Book:
+{{rules}}
+
+
+Text to classify:
+{{text}}

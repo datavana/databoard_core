@@ -1,0 +1,8 @@
+Be careful not to change the original text, just insert the XML tags.
+Your output starts and ends exactly as the provided text.
+
+# Annotation rules:
+{{rules}}
+
+# Text to annotate:
+{{text}}
