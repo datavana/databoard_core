@@ -20,6 +20,7 @@ from databoard_core.clients import llm_unigpt as llm
 
 client = llm.UniGptClient()
 client.settings['gpt_temperature'] = 0.0
+client.settings['rawAnswer'] = False
 answer = client.answer("Why is the sky blue?", "Short answer in six words please")
 print(answer)
 
