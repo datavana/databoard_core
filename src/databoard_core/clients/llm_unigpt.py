@@ -4,7 +4,7 @@
 
 import os
 import json
-from openai import OpenAI, NOT_GIVEN
+from openai import OpenAI, NOT_GIVEN, APIStatusError
 
 from databoard_core import utils
 from databoard_core.clients import LLmClient
@@ -103,7 +103,28 @@ class UniGptClient (LLmClient):
                 tokens = response.usage.total_tokens
 
         except Exception as e:
-            status = str(e)
+            status = self._format_error(e)
 
         result = {'text': result, 'status': status, 'tokens': tokens}
         return result
+
+    def _format_error(self, e):
+        if self.settings.get('rawError', True):
+            return str(e)
+
+        if isinstance(e, APIStatusError):
+            error_short = str(e.status_code)
+
+            error_str = str(e).lower()
+            if (
+                'contextwindowexceeded' in error_str
+                or 'context_length_exceeded' in error_str
+                or 'context window' in error_str
+                or ('tokens' in error_str and 'must be' in error_str)
+            ):
+                error_short += ' context window exceeded'
+
+            return f'{type(e).__name__} ({error_short})'
+
+        return type(e).__name__
+

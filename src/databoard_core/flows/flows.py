@@ -72,6 +72,11 @@ class BaseWorkflow:
         if rawAnswer is not None:
             self.client.settings['rawAnswer'] = rawAnswer
 
+        # Raw error setting
+        rawError = settings.get('rawError', rawAnswer)
+        if rawError is not None:
+            self.client.settings['rawError'] = rawError
+
         # Client settings
         model = settings.get('model', None)
         if model is not None:
@@ -259,7 +264,8 @@ class BaseWorkflow:
                     False for skipping the cache.
                     True for querying the LLM if no cache entry exits.
                     'Only' for only processing values that are in the cache, without any new queries to the LLM.
-        - rawAnswer: Whether to return the answer message or all raw values of the model response.
+        - rawAnswer: Whether to return the answer message or all raw values of the model response. Defaults to False.
+        - rawError: Whether to return raw error messages or to map them to short status messages. Defaults to False.
         - model: The model name to use. Defaults to the model defined in the LLM client.
         - temperature: The temperature to use. Defaults to the temperature defined in the LLM client.
         :param input: Path to a csv or excel file containing cases. Or a pandas data frame.
@@ -338,6 +344,10 @@ class BaseWorkflow:
 
                     # Query the LLM
                     answer = myLlmClient.answer(userPrompt, systemPrompt)
+
+                    if answer['status'] is not None:
+                        self.log(answer)
+                        raise ValueError("The answer contains an error: " + str(answer['status']))
 
                     if answer['text'] == "":
                         self.log(answer)

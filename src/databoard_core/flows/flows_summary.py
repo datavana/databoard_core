@@ -138,6 +138,7 @@ class SummaryWorkflow(BaseWorkflow):
             'text': inputText,
             'rules': self.rules
         }
+
     def reportResults(self, cases):
         """
         Count the first 30 characters of the resulting texts
@@ -164,8 +165,12 @@ class SummaryWorkflow(BaseWorkflow):
             # Single column
             elif (self.outputColumn is not None) and (self.outputColumn in cases.columns):
                 result = cases[[self.outputColumn]].copy()
-                result[self.outputColumn] = result[self.outputColumn].str.strip().str.slice(0,30)
+                result[self.outputColumn] = result[self.outputColumn].astype(str).str.strip().str.slice(0,30)
                 groups = [self.outputColumn]
+
+            # Nothing to report
+            else:
+                return
 
             counts = result.groupby(groups).size().reset_index(name='Count')
             counts = counts.sort_values(by='Count', ascending=False)
