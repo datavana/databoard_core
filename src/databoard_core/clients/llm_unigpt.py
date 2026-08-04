@@ -112,19 +112,40 @@ class UniGptClient (LLmClient):
         if self.settings.get('rawError', True):
             return str(e)
 
+        msg = type(e).__name__
         if isinstance(e, APIStatusError):
-            error_short = str(e.status_code)
+            statuscode = str(e.status_code)
+            reason = self._classify_error(e, getattr(e, 'code', None))
+            if reason is not None:
+                statuscode += " " + reason
 
-            error_str = str(e).lower()
-            if (
-                'contextwindowexceeded' in error_str
-                or 'context_length_exceeded' in error_str
-                or 'context window' in error_str
-                or ('tokens' in error_str and 'must be' in error_str)
-            ):
-                error_short += ' context window exceeded'
+            msg += f' ({statuscode})'
 
-            return f'{type(e).__name__} ({error_short})'
+        return msg
 
-        return type(e).__name__
+    def _classify_error(self, e, code):
+        # 1) Clean messages
+        if code and not str(code).isdigit():
+            return str(code)
+
+        # 2) Search heuristic
+        haystack = self._error_haystack(e).lower()
+        if any(s in haystack for s in (
+                'contextwindowexceeded',
+                'context_length_exceeded',
+                'context window',
+        )):
+            return 'context window exceeded'
+
+        return None
+
+    def _error_haystack(self, e):
+        """Suchtext aus möglichst strukturierten Quellen bauen."""
+        body = getattr(e, 'body', None)
+        if isinstance(body, dict):
+            err = body.get('error', body)
+            if isinstance(err, dict):
+                return str(err.get('message', '')) or str(err)
+            return str(err)
+        return getattr(e, 'message', None) or str(e)
 

@@ -347,7 +347,7 @@ class BaseWorkflow:
 
                     if answer['status'] is not None:
                         self.log(answer)
-                        raise ValueError("The answer contains an error: " + str(answer['status']))
+                        raise ValueError(str(answer['status']))
 
                     if answer['text'] == "":
                         self.log(answer)
