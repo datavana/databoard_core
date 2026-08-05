@@ -47,9 +47,9 @@ class UniGptClient (LLmClient):
 
     def getCacheKey(self):
         return utils.hash(
-            self.settings.get('gpt_url',''),
-            self.settings.get('gpt_modelname', ''),
-            self.settings.get('gpt_temperature', '')
+           str(self.settings.get('gpt_url','')),
+            str(self.settings.get('gpt_modelname', '')),
+            str(self.settings.get('gpt_temperature', ''))
         )
 
     def getClient(self):
@@ -74,6 +74,19 @@ class UniGptClient (LLmClient):
         tokens = None
 
         try:
+            # Defaults
+            modelname = self.settings.get('gpt_modelname', None)
+            if modelname is None:
+                modelname = 'Llama-3.3-70B'
+
+            try:
+                temperature = self.settings.get('gpt_temperature', None)
+                if temperature is None:
+                    temperature = NOT_GIVEN
+                else:
+                    temperature = float(temperature)
+            except ValueError:
+                raise ValueError("The 'temperature' setting must be a valid float.")
 
             response = client.chat.completions.create(
                 messages=[
@@ -86,8 +99,8 @@ class UniGptClient (LLmClient):
                         'content': prompt_content,
                     },
                 ],
-                model = self.settings.get('gpt_modelname', 'Llama-3.3-70B'),
-                temperature = self.settings.get('gpt_temperature', NOT_GIVEN)
+                model = modelname,
+                temperature = temperature
             )
 
             if self.settings.get('rawAnswer', False):
@@ -120,6 +133,8 @@ class UniGptClient (LLmClient):
                 statuscode += " " + reason
 
             msg += f' ({statuscode})'
+        elif isinstance(e, ValueError):
+            msg += f' ({str(e)})'
 
         return msg
 

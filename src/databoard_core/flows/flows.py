@@ -83,8 +83,7 @@ class BaseWorkflow:
             self.client.settings['gpt_modelname'] = model
 
         temperature = settings.get('temperature', None)
-        if temperature is not None:
-            self.client.settings['gpt_temperature'] = temperature
+        self.client.settings['gpt_temperature'] = temperature
 
         # Alternative: local ollama
         # self.client = llm.OllamaClient()
