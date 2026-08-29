@@ -17,6 +17,14 @@ The core repository is a Python package:
 - src/databoard_core/resources/prompts contains the default prompting templates to generate LLM prompts.
 - src/databoard_core/utils contains utility functions.
 
+## Branches
+
+The main branch contains a slim version without local models.
+For deploying the databoard server, use the main branch.
+
+The localmodels branch contains clients for running local models (e.g. ollama).
+Thus, it requires CUDA and other large dependencies.
+We are planning to split local model clients into a separate repository.
 
 ## Installation
 
