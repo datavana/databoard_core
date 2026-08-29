@@ -37,8 +37,8 @@ class BaseWorkflow:
 
         default = {
             'promptFolder': defaultPromptFolder,
-            'cacheFolder' : 'data/.cache',
-            'logFolder': 'data/.logs',
+            'cacheFolder' : os.getenv('DATABOARD_CACHE_FOLDER', 'data/.cache'),
+            'logFolder': os.getenv('DATABOARD_LOG_FOLDER', 'data/.logs'),
         }
 
         self.outputColumn = None

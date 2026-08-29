@@ -29,7 +29,8 @@ class UniGptClient (LLmClient):
 
         self.settings = {
             'gpt_url': base_url,
-            'gpt_token' : access_token
+            'gpt_token' : access_token,
+            'logFolder': os.getenv('DATABOARD_LOG_FOLDER', 'data/.logs'),
         }
 
     def setModel(self, modelname):
@@ -116,10 +117,28 @@ class UniGptClient (LLmClient):
                 tokens = response.usage.total_tokens
 
         except Exception as e:
+            self.log(e)
             status = self._format_error(e)
 
         result = {'text': result, 'status': status, 'tokens': tokens}
         return result
+
+    def log(self, message, scope = None):
+        print(message)
+
+        logFile = self.settings.get('logFile')
+        if logFile is None:
+            logFolder = self.settings.get('logFolder')
+            logFile = scope + '.log' if scope is not None else 'default.log'
+            logFile = os.path.join(logFolder, logFile) if logFile is not None else None
+
+        if logFile is not None:
+            os.makedirs(os.path.dirname(logFile), exist_ok=True)
+            try:
+                with open(logFile, 'a') as file:
+                    file.write(f"{message}\n")
+            except Exception as e:
+                print(f"Failed to write to log file: {e}")
 
     def _format_error(self, e):
         if self.settings.get('rawError', True):
@@ -131,8 +150,14 @@ class UniGptClient (LLmClient):
             reason = self._classify_error(e, getattr(e, 'code', None))
             if reason is not None:
                 statuscode += " " + reason
-
             msg += f' ({statuscode})'
+
+            # Add details for 500 errors
+            if e.status_code >= 500:
+                details = getattr(e, 'message', None) or getattr(e, 'body', None) or str(e)
+                if details:
+                    msg += f': {details}'
+
         elif isinstance(e, ValueError):
             msg += f' ({str(e)})'
 
