@@ -79,7 +79,7 @@ Four different workflows are derived from the base class:
   is, for example, used for knowledge graphs (RDF).
   
 Two types of LLM interfaces are implemented:
-- Ollama: You can use a locally running Ollama docker container.
+- Ollama: You can use a locally running Ollama docker container (in the localmodels branch).
 - UniGPT: You can use the UniGPT provided models. The interface is in principle compatible
   with other LLM providers such as OpenAI APIs. 
 

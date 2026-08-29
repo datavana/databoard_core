@@ -1,9 +1,5 @@
 pandas
 numpy
-torch
-transformers
-qdrant-client
-ollama
 openai
 python-dotenv
 openpyxl
