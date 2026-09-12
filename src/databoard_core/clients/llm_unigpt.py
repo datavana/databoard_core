@@ -33,6 +33,10 @@ class UniGptClient (LLmClient):
             'logFolder': os.getenv('DATABOARD_LOG_FOLDER', 'data/.logs'),
         }
 
+    def setServer(self, url, accesstoken):
+        self.settings['gpt_url'] = url
+        self.settings['gpt_token'] = accesstoken
+
     def setModel(self, modelname):
         """
         Set the model to use
@@ -73,6 +77,7 @@ class UniGptClient (LLmClient):
         result = ''
         status = None
         tokens = None
+        ratelimit = None
 
         try:
             # Defaults
@@ -89,7 +94,7 @@ class UniGptClient (LLmClient):
             except ValueError:
                 raise ValueError("The 'temperature' setting must be a valid float.")
 
-            response = client.chat.completions.create(
+            response = client.chat.completions.with_raw_response.create(
                 messages=[
                     {
                         'role': 'system',
@@ -104,23 +109,29 @@ class UniGptClient (LLmClient):
                 temperature = temperature
             )
 
+            body = response.parse()
+
             if self.settings.get('rawAnswer', False):
-                if hasattr(response, "to_dict"):
-                    result = response.to_dict()
-                elif hasattr(response, "__dict__"):
-                    result = vars(response)
+                if hasattr(body, "to_dict"):
+                    result = body.to_dict()
+                elif hasattr(body, "__dict__"):
+                    result = vars(body)
                 else:
-                    result = str(response)
+                    result = str(body)
                 result = json.dumps(result, ensure_ascii=False, indent=2)
+
+
+                ratelimit = {k: v for k, v in response.headers.items() if k.lower().startswith("x-ratelimit")}
             else:
-                result = response.choices[0].message.content
-                tokens = response.usage.total_tokens
+                result = body.choices[0].message.content
+                tokens = body.usage.total_tokens
 
         except Exception as e:
             self.log(e)
             status = self._format_error(e)
 
-        result = {'text': result, 'status': status, 'tokens': tokens}
+        result = {'text': result, 'status': status, 'tokens': tokens, 'ratelimit' : ratelimit}
+
         return result
 
     def log(self, message, scope = None):
@@ -154,9 +165,11 @@ class UniGptClient (LLmClient):
 
             # Add details for 500 errors
             if e.status_code >= 500:
-                details = getattr(e, 'message', None) or getattr(e, 'body', None) or str(e)
-                if details:
+                details = getattr(e, 'message', None) or getattr(e, 'body', None) or getattr(e, 'error', None) or str(e)
+                if details and isinstance(details, str):
                     msg += f': {details}'
+
+            # TODO: Add NotFoundError details (e.g. Model Llama-3.3.-70B not found)
 
         elif isinstance(e, ValueError):
             msg += f' ({str(e)})'

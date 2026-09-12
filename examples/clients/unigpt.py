@@ -57,3 +57,28 @@ for model, data in answers.items():
 
     print(f"{model:<30} {error:<10} {message[:50]}")
 
+#%% Use a specific LLM server such as Blabador
+
+# To use another LLM server, you can pass the server URL and access token directly when creating the client instance.
+# For example, if you are affiliated with a German research institution, you can obtain API access to
+# Blabador, a service operated by the Jülich research center, following the instructions in the documentation:
+# https://sdlaml.pages.jsc.fz-juelich.de/ai/guides/blablador_api_access/
+
+client = llm.UniGptClient(
+    "https://api.blablador.fz-juelich.de/v1/",
+    "YOURACCESSTOKEN"
+)
+
+# You need to provide a valid model name provided by the server
+# To see the available models, print them
+models = client.models()
+print(models)
+
+# Then set one of the candidates
+client.settings['gpt_modelname'] = 'alias-apertus'
+
+#%% Now you can use the server
+
+client.settings['rawAnswer'] = True
+answer = client.answer("Why is the sky blue?", "Short answer in six words please")
+print(answer)

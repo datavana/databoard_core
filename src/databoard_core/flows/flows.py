@@ -67,6 +67,11 @@ class BaseWorkflow:
         if self.client is None:
             self.client = llm.UniGptClient()
 
+        self.client.setServer(
+            utils.extract_value(settings, 'server.url', os.getenv('DATABOARD_GPT_SERVER')),
+            utils.extract_value(settings, 'server.accesstoken', os.getenv('DATABOARD_GPT_ACCESSTOKEN'))
+        )
+
         # Raw answer setting
         rawAnswer = settings.get('rawAnswer', None)
         if rawAnswer is not None:
@@ -78,12 +83,9 @@ class BaseWorkflow:
             self.client.settings['rawError'] = rawError
 
         # Client settings
-        model = settings.get('model', None)
-        if model is not None:
-            self.client.settings['gpt_modelname'] = model
+        self.client.settings['gpt_modelname'] = settings.get('model', None)
 
-        temperature = settings.get('temperature', None)
-        self.client.settings['gpt_temperature'] = temperature
+        self.client.settings['gpt_temperature'] = settings.get('temperature', None)
 
         # Alternative: local ollama
         # self.client = llm.OllamaClient()

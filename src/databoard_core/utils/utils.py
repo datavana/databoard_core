@@ -44,3 +44,17 @@ def clean_name(value):
     value = value.strip().lower()
     return value.replace(' ', '_').replace('.', '-')
 
+def extract_value(data, path, default=None):
+    """Safely read a nested value using dot notation.
+
+    Example: get_nested(d, "a.b.c", default=0)
+    """
+    keys = path.split(".")
+    for key in keys:
+        if isinstance(data, dict):
+            data = data.get(key, default)
+        else:
+            return default
+        if data is default:
+            return default
+    return data
