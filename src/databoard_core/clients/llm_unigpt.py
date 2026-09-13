@@ -15,9 +15,10 @@ class UniGptClient (LLmClient):
         """
         Queries UniGPT
 
-        Either pass URL and token to the contructor or
+        Either pass URL and token to the constructor or
         set the environment variables DATABOARD_GPT_SERVER
-        and DATABOARD_GPT_ACCESSTOKEN to access the server
+        and DATABOARD_GPT_ACCESSTOKEN to access the server.
+        You can later change the server and token with setServer().
 
         """
         super().__init__()
