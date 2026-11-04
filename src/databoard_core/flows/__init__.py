@@ -3,5 +3,6 @@ from .flows_anno import AnnoWorkflow
 from .flows_coding import CodingWorkflow
 from .flows_summary import SummaryWorkflow
 from .flows_triples import TripleWorkflow
+from .flows_parse import ParseWorkflow
 
-__all__ = ["BaseWorkflow", "AnnoWorkflow", "CodingWorkflow", "SummaryWorkflow", "TripleWorkflow"]
+__all__ = ["BaseWorkflow", "AnnoWorkflow", "CodingWorkflow", "SummaryWorkflow", "TripleWorkflow", "ParseWorkflow"]
