@@ -1,5 +1,8 @@
 import databoard_core.clients as clients
 
+# Error levels that make an input count as failed. Notices and warnings do not.
+FAILING_LEVELS = ('error', 'fatal')
+
 
 class ParseWorkflow:
     """
@@ -32,7 +35,9 @@ class ParseWorkflow:
         :param input: A string or a list of strings
         :param settings: See __init__(), overrides the default settings
         :return: A list with one result per input in input order.
-                 Each result is a dict with the keys 'xml' and 'errors'.
+                 Each result is a dict with the keys 'xml', 'errors' and 'failed'.
+                 'failed' is True if the errors contain an error or fatal entry.
+                 The XML may be a partial tree if errors occurred.
         """
         settings = {**self.settings, **settings}
         input = [input] if isinstance(input, str) else input
@@ -40,4 +45,15 @@ class ParseWorkflow:
         parserClass = clients.get_parser_class(settings.get('formalism'), settings.get('dialect'))
         client = parserClass()
 
-        return [client.answer(text) for text in input]
+        return [self.buildResult(client.answer(text)) for text in input]
+
+    def buildResult(self, answer):
+        """
+        Add the failed flag to the answer of a parser client
+
+        :param answer: A dict with the keys 'xml' and 'errors'
+        :return: A dict with the keys 'xml', 'errors' and 'failed'
+        """
+        errors = answer.get('errors') or []
+        failed = any(e.get('level') in FAILING_LEVELS for e in errors)
+        return {'xml': answer.get('xml'), 'errors': errors, 'failed': failed}
