@@ -1,6 +1,6 @@
 import pytest
 
-from databoard_core.clients import ParserClient, register_parser, unregister_parser
+from databoard_core.clients import ParserClient, has_parser, register_parser, unregister_parser
 from databoard_core.flows import ParseWorkflow
 
 
@@ -114,3 +114,56 @@ def test_mixed_batch_has_a_flag_per_input(levelOptions):
     results = ParseWorkflow().dataToData(['ok', 'error', 'warning', 'fatal'], levelOptions)
 
     assert [r['failed'] for r in results] == [False, True, False, True]
+
+
+# A missing formalism is rejected with a message naming the field, so a client notices the mistake instead of getting wrong results.
+def test_missing_formalism_is_rejected(stubOptions):
+    with pytest.raises(ValueError, match="formalism"):
+        ParseWorkflow().dataToData(['a'], {'dialect': 'test'})
+
+
+# A missing dialect is rejected with a message naming the field, so a text is never silently parsed with a default Dialect.
+def test_missing_dialect_is_rejected(stubOptions):
+    with pytest.raises(ValueError, match="dialect"):
+        ParseWorkflow().dataToData(['a'], {'formalism': 'stub'})
+
+
+# A pair without a parser is rejected and the message names the pair, so users see which combination is not supported.
+def test_unknown_pair_is_rejected_with_the_pair_in_the_message(stubOptions):
+    with pytest.raises(ValueError, match="ebnf.*isodate"):
+        ParseWorkflow().dataToData(['a'], {'formalism': 'ebnf', 'dialect': 'isodate'})
+
+
+# The parser list can be asked whether a pair is known, so the server can reject a request at submission before starting any task.
+def test_parser_list_can_be_queried(stubOptions):
+    assert has_parser('stub', 'test') is True
+    assert has_parser('ebnf', 'dio') is True
+    assert has_parser('ebnf', 'isodate') is False
+
+
+# The rules option has no effect on the result, so clients can already send it before it is processed.
+def test_rules_are_accepted_and_ignored(stubOptions):
+    withoutRules = ParseWorkflow().dataToData(['a'], stubOptions)
+    withRules = ParseWorkflow().dataToData(['a'], {**stubOptions, 'rules': {'any': ['value']}})
+
+    assert withRules == withoutRules
+
+
+# The rules option reaches the parser client unchanged, so a later phase can use it without changing the interface.
+def test_rules_are_passed_to_the_parser_client(stubOptions):
+    class RecordingParserClient(StubParserClient):
+        received = []
+
+        def answer(self, content):
+            RecordingParserClient.received.append(self.settings.get('rules'))
+            return super().answer(content)
+
+    register_parser('stub', 'test', RecordingParserClient)
+    ParseWorkflow().dataToData(['a'], {**stubOptions, 'rules': {'x': 1}})
+
+    assert RecordingParserClient.received == [{'x': 1}]
+
+
+# A valid pair works, so the checks do not block correct requests.
+def test_valid_pair_works(stubOptions):
+    assert ParseWorkflow().dataToData(['a'], stubOptions)[0]['xml'] == '<stub>a</stub>'
