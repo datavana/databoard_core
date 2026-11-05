@@ -47,6 +47,7 @@ Copy the .env.default file to .env and set the environment variables as needed.
 After installing the package, see the `examples` folder for example scripts that use the core classes.
 
 - examples/workflows: Use the datavana workflow classes to feed data into an LLM, with pre- and processing steps.
+  The parse.py example uses the ParseWorkflow to parse texts into XML, without an LLM.
 - examples/clients: Direct API requests to LLMs.
 - examples/embeddings: Use Qdrant to generate and query vector representations of text data (experimental).
 
@@ -114,3 +115,51 @@ Optional settings:
 - rawAnswer: Whether to return the answer message or all raw values of the model response.
 - model: The model name to use. Defaults to the model defined in the LLM client.
 - temperature: The temperature to use. Defaults to the temperature defined in the LLM client.
+
+# Parsing
+
+The `ParseWorkflow()` class parses texts that are written in a specific notation and returns XML.
+It does not use an LLM. No prompts, cache or model settings apply.
+
+```
+wf = ParseWorkflow()
+results = wf.dataToData(['text one', 'text two'], {'formalism': 'ebnf', 'dialect': 'dio'})
+```
+
+Settings:
+
+- formalism (required): The kind of specification the parser is built from, for example `ebnf`.
+- dialect (required): The notation of the input texts, for example `dio`.
+  The pair of formalism and dialect selects the parser.
+  There are no defaults. A missing option or a pair without a parser raises a `ValueError`.
+- rules: Reserved for later use. The value is passed to the parser client, but not processed yet.
+
+The input is a string or a list of strings.
+The workflow returns one result per input, in the order of the input.
+Each result is a dict with the following keys:
+
+- xml: The parsed text as XML. If errors occurred, this may be a partial tree or None.
+- errors: A list of errors. Each error has the keys `level`, `code`, `line`, `column` and `message`.
+  The level is one of `notice`, `warning`, `error` or `fatal`.
+- failed: True if the errors contain an `error` or `fatal` entry. Notices and warnings do not fail an input.
+
+## Available parsers
+
+The parser list maps a pair of formalism and dialect to a parser client:
+
+| Formalism | Dialect | Description                            |
+|-----------|---------|----------------------------------------|
+| ebnf      | dio     | Die Deutschen Inschriften Online (DIO) |
+
+Use `has_parser(formalism, dialect)` from `databoard_core.clients` to check whether a pair is available.
+
+## Adding a new dialect
+
+1. Put the grammar (for example `mydialect.ebnf`) and the generated parser (for example `mydialectParser.py`)
+   side by side in `src/databoard_core/resources/parser`.
+   The copy in this repository is the canonical one, see `docs/adr/0002-core-holds-canonical-grammars.md`.
+   Grammar development and parser tests happen elsewhere.
+2. Add a client class derived from `ParserClient` in `src/databoard_core/clients`.
+   Its `answer(content)` method returns a dict with `xml` and `errors`, see `parser_dio.py` for an example.
+3. Register the client with `register_parser(formalism, dialect, clientClass)`
+   at the end of `src/databoard_core/clients/parser_registry.py`.
