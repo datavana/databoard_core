@@ -21,8 +21,9 @@ class ParseWorkflow:
         Init workflow class
 
         Settings:
-        - formalism: The Formalism of the Parser, e.g. 'ebnf'
-        - dialect: The Dialect of the input texts, e.g. 'dio'
+        - formalism: The Formalism of the Parser, e.g. 'ebnf' (required)
+        - dialect: The Dialect of the input texts, e.g. 'dio' (required)
+        - rules: Reserved for later use. It is passed to the parser client, but not processed yet.
 
         :param settings: Default settings
         """
@@ -34,6 +35,7 @@ class ParseWorkflow:
 
         :param input: A string or a list of strings
         :param settings: See __init__(), overrides the default settings
+        :raises ValueError: If formalism or dialect is missing or no parser exists for the pair
         :return: A list with one result per input in input order.
                  Each result is a dict with the keys 'xml', 'errors' and 'failed'.
                  'failed' is True if the errors contain an error or fatal entry.
@@ -42,8 +44,13 @@ class ParseWorkflow:
         settings = {**self.settings, **settings}
         input = [input] if isinstance(input, str) else input
 
-        parserClass = clients.get_parser_class(settings.get('formalism'), settings.get('dialect'))
+        for name in ('formalism', 'dialect'):
+            if not settings.get(name):
+                raise ValueError(f"Missing option '{name}'")
+
+        parserClass = clients.get_parser_class(settings['formalism'], settings['dialect'])
         client = parserClass()
+        client.settings['rules'] = settings.get('rules')
 
         return [self.buildResult(client.answer(text)) for text in input]
 
