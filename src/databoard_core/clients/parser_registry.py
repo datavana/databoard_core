@@ -22,6 +22,17 @@ def unregister_parser(formalism, dialect):
     _parsers.pop((formalism, dialect), None)
 
 
+def has_parser(formalism, dialect):
+    """
+    Check whether a parser is registered for a Formalism and Dialect
+
+    :param formalism: The Formalism, e.g. 'ebnf'
+    :param dialect: The Dialect, e.g. 'dio'
+    :return: True or False
+    """
+    return (formalism, dialect) in _parsers
+
+
 def get_parser_class(formalism, dialect):
     """
     Get the parser client class for a Formalism and Dialect
