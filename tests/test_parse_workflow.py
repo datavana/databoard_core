@@ -167,3 +167,15 @@ def test_rules_are_passed_to_the_parser_client(stubOptions):
 # A valid pair works, so the checks do not block correct requests.
 def test_valid_pair_works(stubOptions):
     assert ParseWorkflow().dataToData(['a'], stubOptions)[0]['xml'] == '<stub>a</stub>'
+
+
+# A single-line text is parsed as source text and never taken for a file name, so inputs cannot make the parser load files.
+def test_dio_never_takes_a_single_line_text_for_a_file_name(tmp_path):
+    secret = tmp_path / 'secret.txt'
+    secret.write_text('SECRET-CONTENT')
+
+    results = ParseWorkflow().dataToData(['anno domini', str(secret)], {'formalism': 'ebnf', 'dialect': 'dio'})
+
+    for result in results:
+        assert 'File not found' not in str(result['errors'])
+        assert 'SECRET-CONTENT' not in str(result)
