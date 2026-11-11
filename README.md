@@ -156,7 +156,7 @@ Use `has_parser(formalism, dialect)` from `databoard_core.clients` to check whet
 ## Adding a new dialect
 
 1. Put the grammar (for example `mydialect.ebnf`) and the generated parser (for example `mydialectParser.py`)
-   side by side in `src/databoard_core/resources/parser`.
+   side by side in a folder for the dialect, for example `src/databoard_core/resources/parser/mydialect`.
    The copy in this repository is the canonical one, see `docs/adr/0002-core-holds-canonical-grammars.md`.
    Grammar development and parser tests happen elsewhere.
 2. Add a client class derived from `ParserClient` in `src/databoard_core/clients`.
