@@ -5,14 +5,19 @@
 #
 # The Formalism and the Dialect select the parser, see the README.
 # Note: Parsing happens locally. No LLM and no access token is needed.
+#
+# A DIO text is a complete inscription with container tags (sco, sec, par, lno),
+# as it comes from the T3 database. The inscriptions below are invented.
 
 from databoard_core.flows import ParseWorkflow
 
 #%% Parse a list of texts
 
 texts = [
-    "anno domini 1455",
-    "anno domini [1455-1500]",
+    # The word separators are look-alike characters (U+2219), preprocessing replaces them by middle dots
+    "<sco><sec><par><lno>Anno ∙ d(omi)ni ∙ M<sup>o</sup> ∙ cccc<sup>o</sup> ∙ lv ∙ [obiit]</lno></par></sec></sco>",
+    # U+0387 is not covered by the preprocessing rules: the result is a parse error and a partial tree
+    "<sco><sec><par><lno>Anno · d(omi)ni</lno></par></sec></sco>",
 ]
 
 wf = ParseWorkflow()
