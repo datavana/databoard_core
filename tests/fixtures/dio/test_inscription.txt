@@ -1,0 +1,7 @@
+<sco>
+    <sec>
+      <par>
+        <lno>Anno ∙ d(omi)ni ∙ M<sup>o</sup> ∙ ccccc<sup>o</sup> ∙ xvij<sup>o</sup> ∙ starb ∙ / [h]a[ns]werk ∙ der ∙ Erber ∙ vnd ∙ from ∙ Bauẉ<appalpha id="footnotes-appalpha-test-0001-a">a)</appalpha> ∙ Leoṛḥạ[rd von ---]<appalpha id="footnotes-appalpha-test-0001-b">b)</appalpha> Steinmetz ∙ Kolberger / ∙ Burger ∙ zu ∙ Mittag ∙ Laetare ∙ <lig>de</lig>m ∙ got ∙ gnad<appalpha id="footnotes-appalpha-test-0001-c">c)</appalpha></lno>
+      </par>
+    </sec>
+  </sco>
