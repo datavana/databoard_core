@@ -53,7 +53,8 @@ def preprocess(text):
     """
     for pattern, replace in RULES:
         text = pattern.sub(replace, text)
-    return text.strip().lstrip('﻿')
+    # Remove the BOM first, otherwise whitespace after it would be kept
+    return text.lstrip('﻿').strip()
 
 
 def transform(text):
