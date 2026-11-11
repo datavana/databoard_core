@@ -1,0 +1,23 @@
+search;replace;cases;comment
+"<!--[^>]+>";"";;Remove comments
+"‎";"";;Remove LRM marker
+" ";" ";338,80;Replace nbsp
+…;...;64;Replace three dots by three dots
+[∙∙ˑ];·;;Unify middle dots
+<sub>:</sub>;·̣;112;Unify combining dot below
+"&#x323;";̣;;Unify combining dot below
+°;<sup>o</sup>;;Replace degree
+"<par>\s*</par>";"";318,80;Remove empty tags
+"<sec>\s*</sec>";"";80;Remove empty tags
+"<p>";"<snt>";;Replace p tags
+"</p>";"</snt>";;Replace p tags
+"<snt>\s*</snt>";"";80;Remove empty tags (after p and nbsp were replaced)
+"<lin>\s*</lin>";"";220;Remove empty tags
+"<lno>\s*</lno>";"";;Remove empty tags
+"<lin/>";"";78,243;Remove empty tags
+"<lno/>";"";376;Remove empty tags
+<sup></sup>;"";376;Remove empty tags
+"</snt>\s*<table>";"</snt><par><table>";299;Insert missing par tag
+"</table>\s*</sec>";"</table></par></sec>";299;Insert missing par tag
+"(\[[^\]/]+)([/]*)</(lno|lin)>";"\1]\2</\3>";269,384;Close square bracket at line end
+"<(lno|lin)>([^\]\[]+)\]";"<\1>[\2]";269,384;Open square bracket at line beginning
