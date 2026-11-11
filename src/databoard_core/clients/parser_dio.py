@@ -9,15 +9,9 @@ class DioParserClient(ParserClient):
     def answer(self, content):
         try:
             # Import lazily: loading the generated parser is expensive and requires DHParser
-            from databoard_core.resources.parser import dioParser
+            from databoard_core.resources.parser.dio import dioTransform
 
-            # DHParser takes a text without a line break for a file name.
-            # A line break makes sure the content is always parsed as source text, never loaded as a file.
-            if '\n' not in content:
-                content += '\n'
-
-            tree, messages = dioParser.compile_snippet(content)
-            xml = tree.as_xml() if tree is not None else None
+            xml, messages = dioTransform.transform(content)
             errors = [self.convertError(m) for m in messages]
         except Exception as e:
             xml = None
