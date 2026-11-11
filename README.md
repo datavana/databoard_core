@@ -6,7 +6,7 @@ working with machine learning models such as LLMs and parsers.
 ## Folder structure
 
 Don't be frightened by the deeply nested folder structure.
-It follows the standard Python package structure and 
+It follows the standard Python package structure and
 makes the core classes available to the databoard server and to your local scripts.
 
 The core repository is a Python package:
@@ -29,9 +29,9 @@ We are planning to split local model clients into a separate repository.
 ## Installation
 
 For local development, you create a `databoard` working directory
-and clone the `databoard_core` repository into this directory as a subfolder. 
+and clone the `databoard_core` repository into this directory as a subfolder.
 
-Then you create a Python venv within the working directory 
+Then you create a Python venv within the working directory
 and install the core repository as a Python module in edit mode.
 This makes the core classes available to your local scripts.
 
@@ -51,38 +51,38 @@ After installing the package, see the `examples` folder for example scripts that
 - examples/clients: Direct API requests to LLMs.
 - examples/embeddings: Use Qdrant to generate and query vector representations of text data (experimental).
 
-
 # Base components
 
 The `BaseWorkflow()` class implements the following input-output-functions
 making your life easy:
 
 - dataToData: String input, string output.
-- csvToFiles: CSV input, output is stored in single text files for each case. 
-- filesToCsv: One text file for each case, CSV output. 
-- csvToCsv: From a csv table to a csv table. 
+- csvToFiles: CSV input, output is stored in single text files for each case.
+- filesToCsv: One text file for each case, CSV output.
+- csvToCsv: From a csv table to a csv table.
 - filesToFiles: From a folder with input files to a folder with output files.
- 
+
 Four different workflows are derived from the base class:  
 
 - CodingWorkflow: The workflow is used for content analysis if you have predefined categories.
   You provide a codebook with category name, description, and optionally examples.  
   The LLM workflow will output one or multiple matching categories.
 - SummaryWorkflow: The workflow is used for qualitative content analysis approaches.
-  The input is condensed into a shorter summary, phrase or keyword. 
+  The input is condensed into a shorter summary, phrase or keyword.
   If you provide categories, one summary or keyword is provided for each category.
-  This workflow is very open. You can use it to bypass pre- and postprocessing and 
+  This workflow is very open. You can use it to bypass pre- and postprocessing and
   work with raw LLM results.
 - AnnoWorkflow: The workflow can be used to find text segments, for example for annotating
-  named entities. According to a rule set, the matching text segments are enclosed in tags.   
+  named entities. According to a rule set, the matching text segments are enclosed in tags.
 - TripleWorkflow: The workflow is used for extracting statements from the inputs.  
   Each statement consists of a subject-predicate-object triple. Such a structure
   is, for example, used for knowledge graphs (RDF).
   
 Two types of LLM interfaces are implemented:
+
 - Ollama: You can use a locally running Ollama docker container (in the localmodels branch).
 - UniGPT: You can use the UniGPT provided models. The interface is in principle compatible
-  with other LLM providers such as OpenAI APIs. 
+  with other LLM providers such as OpenAI APIs.
 
 The workflow functions support the following settings:
 
@@ -136,11 +136,22 @@ Settings:
 
 The input is a string or a list of strings.
 The workflow returns one result per input, in the order of the input.
+
+Each input always runs through the transform of the dialect:
+
+1. Preprocessing: The raw text is unified by the preprocessing rules of the dialect,
+   for example look-alike characters or broken markup are replaced.
+   A leading BOM and surrounding whitespace are removed.
+2. Parsing with the parser settings of the dialect.
+3. Serialization as slim XML: Plain text is not wrapped in extra elements, lines are kept inline.
+
 Each result is a dict with the following keys:
 
 - xml: The parsed text as XML. If errors occurred, this may be a partial tree or None.
 - errors: A list of errors. Each error has the keys `level`, `code`, `line`, `column` and `message`.
   The level is one of `notice`, `warning`, `error` or `fatal`.
+  Line and column refer to the preprocessed text.
+  Rules that remove text, for example HTML comments, shift the positions.
 - failed: True if the errors contain an `error` or `fatal` entry. Notices and warnings do not fail an input.
 
 ## Available parsers
@@ -155,11 +166,22 @@ Use `has_parser(formalism, dialect)` from `databoard_core.clients` to check whet
 
 ## Adding a new dialect
 
-1. Put the grammar (for example `mydialect.ebnf`) and the generated parser (for example `mydialectParser.py`)
-   side by side in a folder for the dialect, for example `src/databoard_core/resources/parser/mydialect`.
-   The copy in this repository is the canonical one, see `docs/adr/0002-core-holds-canonical-grammars.md`.
-   Grammar development and parser tests happen elsewhere.
+1. Create a folder for the dialect in `src/databoard_core/resources/parser`, for example `mydialect`.
+   It contains at least four files, see the `dio` folder for an example:
+
+   | File                    | Content                                                 |
+   |-------------------------|---------------------------------------------------------|
+   | `mydialect.ebnf`        | The grammar                                             |
+   | `mydialectParser.py`    | The parser generated from the grammar with DHParser     |
+   | `mydialectConfig.ini`   | The DHParser settings of the parser                     |
+   | `mydialectTransform.py` | The transform: preprocessing, parsing and serialization |
+
+   Further files used by the transform go into the same folder,
+   for example the preprocessing rules `dio_preprocess.csv` of the DIO dialect.
 2. Add a client class derived from `ParserClient` in `src/databoard_core/clients`.
-   Its `answer(content)` method returns a dict with `xml` and `errors`, see `parser_dio.py` for an example.
+   Its `answer(content)` method calls the transform and returns a dict with `xml` and `errors`,
+   see `parser_dio.py` for an example.
 3. Register the client with `register_parser(formalism, dialect, clientClass)`
    at the end of `src/databoard_core/clients/parser_registry.py`.
+4. Add fixtures in `tests/fixtures/mydialect` and test the transform through `ParseWorkflow`,see
+   `tests/test_dio_transform.py`.
