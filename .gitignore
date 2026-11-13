@@ -1,3 +1,4 @@
 settings.py
 settings.R
 .env
+__pycache__
