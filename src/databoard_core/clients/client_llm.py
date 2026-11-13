@@ -1,5 +1,5 @@
 #
-# UniGPT client class. Queries an OpenAI compatible server to generate responses to prompts.
+# Llm client class. Queries an OpenAI compatible server to generate responses to prompts.
 #
 
 import os
@@ -7,13 +7,13 @@ import json
 from openai import OpenAI, NOT_GIVEN, APIStatusError
 
 from databoard_core import utils
-from databoard_core.clients import LLmClient
+from databoard_core.clients import Client
 
 
-class UniGptClient (LLmClient):
+class LlmClient (Client):
     def __init__(self, base_url=None, access_token=None):
         """
-        Queries UniGPT
+        Queries LLM servers such as UniGPT
 
         Either pass URL and token to the constructor or
         set the environment variables DATABOARD_GPT_SERVER
@@ -72,7 +72,7 @@ class UniGptClient (LLmClient):
         models = client.models.list()
         return [m.id for m in models.data]
 
-    def answer(self, prompt_content, prompt_system):
+    def answer(self, prompt):
         client = self.getClient()
 
         result = ''
@@ -99,11 +99,11 @@ class UniGptClient (LLmClient):
                 messages=[
                     {
                         'role': 'system',
-                        'content':  prompt_system,
+                        'content':  prompt['system'],
                     },
                     {
                         'role': 'user',
-                        'content': prompt_content,
+                        'content': prompt['user'],
                     },
                 ],
                 model = modelname,

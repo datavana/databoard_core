@@ -52,11 +52,11 @@ class BaseWorkflow:
         """
         Instantiate a LLM client.
 
-        By default, a UniGptClient() is created.
+        By default, a LlmClient() is created.
         You can provide an alternative client in the 'client' key of the settings.
 
         Settings:
-        - client: An alternative client derived from LLmClient()
+        - client: An alternative client derived from Client()
 
         :param settings:
         :return: A LLM client
@@ -65,7 +65,7 @@ class BaseWorkflow:
             self.client = settings.get('client', None)
 
         if self.client is None:
-            self.client = llm.UniGptClient()
+            self.client = llm.LlmClient()
 
         self.client.setServer(
             utils.extract_value(settings, 'server.url', os.getenv('DATABOARD_GPT_SERVER')),
@@ -312,8 +312,8 @@ class BaseWorkflow:
             raise ValueError("Unsupported input format")
 
         # Init client
-        myLlmClient = self.getClient(settings)
-        modelKey = myLlmClient.getCacheKey()
+        myClient = self.getClient(settings)
+        modelKey = myClient.getCacheKey()
         totalCount = 0
 
         for index, row in tqdm(cases.iterrows(), total=len(cases), desc="Processing cases"):
@@ -344,7 +344,7 @@ class BaseWorkflow:
                     self.writeToCache(cacheKey, 'user.txt', userPrompt)
 
                     # Query the LLM
-                    answer = myLlmClient.answer(userPrompt, systemPrompt)
+                    answer = myClient.answer({'user': userPrompt, 'system': systemPrompt})
 
                     if answer['status'] is not None:
                         self.log(answer)

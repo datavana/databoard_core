@@ -1,6 +1,6 @@
-class LLmClient:
+class Client:
     """
-    Base class for large language model clients.
+    Base class for data processing clients.
     Don't use this class directly, use one of the subclasses instead.
     """
     def __init__(self):
@@ -16,18 +16,19 @@ class LLmClient:
 
     def getCacheKey(self):
         """
-        Generate a cache key from the LLM server and model
+        Generate a cache key for storing answers based on inputs
 
         :return: String
         """
         return 'undefined'
 
-    def answer(self, prompt_content, prompt_system):
+    def answer(self, prompt):
         """
         Generate a response
 
-        :param prompt_content: The user prompt
-        :param prompt_system: The system prompt
+        :param prompt: An object with the input to process by the client.
+                       The type of object depends on the specific class.
+                       For example, the LlmClient expects an object with keys 'user' and 'system'.
         :return: A dict with the response text and status
         """
 

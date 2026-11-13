@@ -81,7 +81,7 @@ Four different workflows are derived from the base class:
 Two types of LLM interfaces are implemented:
 
 - Ollama: You can use a locally running Ollama docker container (in the localmodels branch).
-- UniGPT: You can use the UniGPT provided models. The interface is in principle compatible
+- Llm: You can use the UniGPT provided models. The interface is in principle compatible
   with other LLM providers such as OpenAI APIs.
 
 The workflow functions support the following settings:

@@ -14,20 +14,20 @@ import json
 import dotenv
 dotenv.load_dotenv("databoard_core/.env")
 
-from databoard_core.clients import llm_unigpt as llm
+from databoard_core.clients import client_llm as llm
 
 #%% Use our client classes
 
-client = llm.UniGptClient()
+client = llm.LlmClient()
 client.settings['gpt_temperature'] = 0.0
 client.settings['rawAnswer'] = False
-answer = client.answer("Why is the sky blue?", "Short answer in six words please")
+answer = client.answer({'user': "Why is the sky blue?", 'system': "Short answer in six words please"})
 print(answer)
 
 
 #%% Iterate over available models and output raw answers
 
-client = llm.UniGptClient()
+client = llm.LlmClient()
 models = client.models()
 
 #%%
@@ -38,7 +38,7 @@ for model in models:
 
     client.settings['gpt_modelname'] = model
     client.settings['rawAnswer'] = True
-    answers[model] = client.answer("Why is the sky blue?", "Short answer in six words please")
+    answers[model] = client.answer({'user': "Why is the sky blue?", 'system': "Short answer in six words please"})
 
     print(answers[model]['text'])
 
@@ -64,7 +64,7 @@ for model, data in answers.items():
 # Blabador, a service operated by the Jülich research center, following the instructions in the documentation:
 # https://sdlaml.pages.jsc.fz-juelich.de/ai/guides/blablador_api_access/
 
-client = llm.UniGptClient(
+client = llm.LlmClient(
     "https://api.blablador.fz-juelich.de/v1/",
     "YOURACCESSTOKEN"
 )
@@ -80,5 +80,5 @@ client.settings['gpt_modelname'] = 'alias-apertus'
 #%% Now you can use the server
 
 client.settings['rawAnswer'] = True
-answer = client.answer("Why is the sky blue?", "Short answer in six words please")
+answer = client.answer({'user': "Why is the sky blue?", 'system': "Short answer in six words please"})
 print(answer)
