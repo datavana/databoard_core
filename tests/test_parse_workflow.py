@@ -1,7 +1,15 @@
 import pytest
 
-from databoard_core.clients import ParserClient, has_parser, register_parser, unregister_parser
+from databoard_core.clients import Client, ParserClient, has_parser, register_parser, unregister_parser
 from databoard_core.flows import ParseWorkflow
+
+
+def test_parser_client_inherits_client_initialization():
+    client = ParserClient()
+
+    assert isinstance(client, Client)
+    assert client.settings == {}
+    assert client.client is None
 
 
 class StubParserClient(ParserClient):

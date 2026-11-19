@@ -1,4 +1,7 @@
-class ParserClient:
+from databoard_core.clients.client import Client
+
+
+class ParserClient(Client):
     """
     Base class for parser clients.
     Don't use this class directly, use one of the subclasses instead.
@@ -6,7 +9,7 @@ class ParserClient:
     A parser client turns a text written in one Dialect into XML.
     """
     def __init__(self):
-        self.settings = {}
+        super().__init__()
 
     @staticmethod
     def makeError(level, code, line, column, message):
