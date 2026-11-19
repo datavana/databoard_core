@@ -1,10 +1,14 @@
+import pandas as pd
+
+from databoard_core import utils
 import databoard_core.clients as clients
+from .flows import BaseWorkflow
 
 # Error levels that make an input count as failed. Notices and warnings do not.
 FAILING_LEVELS = ('error', 'fatal')
 
 
-class ParseWorkflow:
+class ParseWorkflow(BaseWorkflow):
     """
     Workflow to parse texts written in a Dialect and get XML
 
@@ -27,13 +31,14 @@ class ParseWorkflow:
 
         :param settings: Default settings
         """
-        self.settings = settings
+        super().__init__(settings)
 
-    def dataToData(self, input, settings={}):
+    def processData(self, input, output=None, settings={}):
         """
-        Parse a string or a list of strings
+        Parse the text values in a data frame, string, or list of strings.
 
-        :param input: A string or a list of strings
+        :param input: A data frame with a 'text' column, a string, or a list of strings
+        :param output: Optional path to write the parse results as a table
         :param settings: See __init__(), overrides the default settings
         :raises ValueError: If formalism or dialect is missing or no parser exists for the pair
         :return: A list with one result per input in input order.
@@ -42,7 +47,17 @@ class ParseWorkflow:
                  The XML may be a partial tree if errors occurred.
         """
         settings = {**self.settings, **settings}
-        input = [input] if isinstance(input, str) else input
+
+        if isinstance(input, pd.DataFrame):
+            if 'text' not in input.columns:
+                raise ValueError("Input data frame must contain a 'text' column")
+            texts = input['text'].tolist()
+        elif isinstance(input, str):
+            texts = [input]
+        elif isinstance(input, list):
+            texts = input
+        else:
+            raise ValueError("Unsupported input format")
 
         for name in ('formalism', 'dialect'):
             if not settings.get(name):
@@ -52,7 +67,12 @@ class ParseWorkflow:
         client = parserClass()
         client.settings.update(settings)
 
-        return [self.buildResult(client.answer(text)) for text in input]
+        results = [self.buildResult(client.answer(text)) for text in texts]
+
+        if output is not None:
+            utils.write_table(pd.DataFrame(results), output)
+
+        return results
 
     def buildResult(self, answer):
         """

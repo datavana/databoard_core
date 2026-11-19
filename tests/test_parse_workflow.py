@@ -1,7 +1,9 @@
+import csv
+
 import pytest
 
 from databoard_core.clients import Client, ParserClient, has_parser, register_parser, unregister_parser
-from databoard_core.flows import ParseWorkflow
+from databoard_core.flows import BaseWorkflow, ParseWorkflow
 
 
 def test_parser_client_inherits_client_initialization():
@@ -10,6 +12,10 @@ def test_parser_client_inherits_client_initialization():
     assert isinstance(client, Client)
     assert client.settings == {}
     assert client.client is None
+
+
+def test_parse_workflow_uses_base_workflow():
+    assert isinstance(ParseWorkflow(), BaseWorkflow)
 
 
 class StubParserClient(ParserClient):
@@ -74,6 +80,17 @@ def test_settings_from_constructor_are_used(stubOptions):
     results = ParseWorkflow(stubOptions).dataToData(['x'])
 
     assert results[0]['xml'] == '<stub>x</stub>'
+
+
+def test_process_data_writes_results_when_output_is_requested(tmp_path, stubOptions):
+    output = tmp_path / 'parsed.csv'
+
+    results = ParseWorkflow().processData(['x'], str(output), stubOptions)
+
+    with output.open(newline='') as file:
+        row = next(csv.DictReader(file))
+    assert results[0]['xml'] == row['xml'] == '<stub>x</stub>'
+    assert row['failed'] == 'False'
 
 
 # The real DIO parser is registered for ebnf + dio and keeps the result shape without crashing; its output quality is deliberately not tested here.
