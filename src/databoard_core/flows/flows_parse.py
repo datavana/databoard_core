@@ -17,21 +17,37 @@ class ParseWorkflow(BaseWorkflow):
     Getting started:
 
     wf = ParseWorkflow()
-    results = wf.dataToData(['text one', 'text two'], {'formalism': 'ebnf', 'dialect': 'dio'})
+    results = wf.dataToData(['text one', 'text two'], {'rules': {'formalism': 'ebnf', 'dialect': 'dio'}})
     """
 
-    def __init__(self, settings={}):
+    def __init__(self, settings={}, *, rules=None):
         """
         Init workflow class
 
         Settings:
-        - formalism: The Formalism of the Parser, e.g. 'ebnf' (required)
-        - dialect: The Dialect of the input texts, e.g. 'dio' (required)
-        - rules: Reserved for later use. It is passed to the parser client, but not processed yet.
+        - rules: A dict containing the parser's formalism and dialect.
 
         :param settings: Default settings
+        :param rules: Default parser formalism and dialect; overrides rules in settings
         """
+        if rules is not None:
+            settings = {**settings, 'rules': rules}
         super().__init__(settings)
+
+    @staticmethod
+    def parserSettings(settings):
+        """Validate and extract the parser options from rules."""
+        rules = settings.get('rules')
+        if rules is None:
+            raise ValueError("Missing option 'rules'")
+        if not isinstance(rules, dict):
+            raise ValueError("Option 'rules' must be a dict")
+        for name in ('formalism', 'dialect'):
+            if not rules.get(name):
+                raise ValueError(f"Missing option '{name}' in rules")
+            if not isinstance(rules[name], str):
+                raise ValueError(f"Option '{name}' in rules must be a string")
+        return {name: rules[name] for name in ('formalism', 'dialect')}
 
     def processData(self, input, output=None, settings={}):
         """
@@ -47,6 +63,7 @@ class ParseWorkflow(BaseWorkflow):
                  The XML may be a partial tree if errors occurred.
         """
         settings = {**self.settings, **settings}
+        parserOptions = self.parserSettings(settings)
 
         if isinstance(input, pd.DataFrame):
             if 'text' not in input.columns:
@@ -59,13 +76,9 @@ class ParseWorkflow(BaseWorkflow):
         else:
             raise ValueError("Unsupported input format")
 
-        for name in ('formalism', 'dialect'):
-            if not settings.get(name):
-                raise ValueError(f"Missing option '{name}'")
-
-        parserClass = clients.get_parser_class(settings['formalism'], settings['dialect'])
+        parserClass = clients.get_parser_class(parserOptions['formalism'], parserOptions['dialect'])
         client = parserClass()
-        client.settings.update(settings)
+        client.settings.update({**settings, **parserOptions})
 
         results = [self.buildResult(client.answer(text)) for text in texts]
 

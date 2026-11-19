@@ -20,12 +20,12 @@ texts = [
     "<sco><sec><par><lno>Anno · d(omi)ni</lno></par></sec></sco>",
 ]
 
-wf = ParseWorkflow()
-
-results = wf.dataToData(texts, {
+wf = ParseWorkflow(rules={
     'formalism': 'ebnf',
     'dialect': 'dio'
 })
+
+results = wf.dataToData(texts)
 
 #%% There is one result per text, in the order of the input
 
@@ -39,6 +39,6 @@ for text, result in zip(texts, results):
 #%% A combination without a parser is rejected
 
 try:
-    wf.dataToData(texts, {'formalism': 'ebnf', 'dialect': 'isodate'})
+    wf.dataToData(texts, {'rules': {'formalism': 'ebnf', 'dialect': 'isodate'}})
 except ValueError as e:
     print(e)
