@@ -122,17 +122,18 @@ The `ParseWorkflow()` class parses texts that are written in a specific notation
 It does not use an LLM. No prompts, cache or model settings apply.
 
 ```
-wf = ParseWorkflow()
-results = wf.dataToData(['text one', 'text two'], {'formalism': 'ebnf', 'dialect': 'dio'})
+wf = ParseWorkflow(rules={'formalism': 'ebnf', 'dialect': 'dio'})
+results = wf.dataToData(['text one', 'text two'])
 ```
 
 Settings:
 
-- formalism (required): The kind of specification the parser is built from, for example `ebnf`.
-- dialect (required): The notation of the input texts, for example `dio`.
-  The pair of formalism and dialect selects the parser.
-  There are no defaults. A missing option or a pair without a parser raises a `ValueError`.
-- rules: Reserved for later use. The value is passed to the parser client, but not processed yet.
+- rules: A dict with `formalism` (e.g. `ebnf`) and `dialect` (e.g. `dio`).
+  The pair selects the parser. Pass it to the constructor as above, or in the
+  call settings as `{'rules': {'formalism': 'ebnf', 'dialect': 'dio'}}`.
+  Call settings override constructor settings.
+  There are no defaults. Missing values, a non-dict `rules`, or an unknown pair
+  raise a `ValueError`.
 
 The input is a string or a list of strings.
 The workflow returns one result per input, in the order of the input.
