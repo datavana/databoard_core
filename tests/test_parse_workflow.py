@@ -86,6 +86,13 @@ def test_dio_is_registered_and_returns_result_shape():
     assert isinstance(results[0]['errors'], list)
 
 
+def test_generic_parser_client_loads_transform_for_formalism_and_dialect():
+    client = ParserClient()
+    client.settings.update({'formalism': 'ebnf', 'dialect': 'dio'})
+
+    assert client.getClient().__name__ == 'databoard_core.resources.parser.dio.dioTransform'
+
+
 # Notices and warnings do not fail an input, so harmless remarks do not turn a clean batch into MIXED.
 def test_notices_and_warnings_do_not_fail_the_input(levelOptions):
     results = ParseWorkflow().dataToData(['ok', 'notice', 'warning'], levelOptions)
