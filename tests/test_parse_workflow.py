@@ -47,7 +47,7 @@ def stubOptions():
 
 # Every result has exactly the keys xml, errors and failed, because the server and clients rely on this shape.
 def test_returns_result_with_xml_and_errors_per_input(stubOptions):
-    results = ParseWorkflow().dataToData(['a', 'b'], stubOptions)
+    results = ParseWorkflow().dataToData(['a', 'b'], {'rules': stubOptions})
 
     assert len(results) == 2
     for result in results:
@@ -56,7 +56,7 @@ def test_returns_result_with_xml_and_errors_per_input(stubOptions):
 
 # Results come back in input order, because clients match results to inputs by position and have no other identifier.
 def test_preserves_input_order(stubOptions):
-    results = ParseWorkflow().dataToData(['first', 'second', 'third'], stubOptions)
+    results = ParseWorkflow().dataToData(['first', 'second', 'third'], {'rules': stubOptions})
 
     assert [r['xml'] for r in results] == [
         '<stub>first</stub>', '<stub>second</stub>', '<stub>third</stub>'
@@ -65,19 +65,19 @@ def test_preserves_input_order(stubOptions):
 
 # An empty input list gives an empty result list instead of an error, so an empty batch is harmless.
 def test_empty_list_returns_empty_list(stubOptions):
-    assert ParseWorkflow().dataToData([], stubOptions) == []
+    assert ParseWorkflow().dataToData([], {'rules': stubOptions}) == []
 
 
 # A single string behaves like a list of one, so callers need no special case and always get a list back.
 def test_single_string_is_treated_as_list_of_one(stubOptions):
-    results = ParseWorkflow().dataToData('only', stubOptions)
+    results = ParseWorkflow().dataToData('only', {'rules': stubOptions})
 
     assert results == [{'xml': '<stub>only</stub>', 'errors': [], 'failed': False}]
 
 
 # Default settings given to the constructor apply to later calls, so a workflow can be configured once and reused.
 def test_settings_from_constructor_are_used(stubOptions):
-    results = ParseWorkflow(stubOptions).dataToData(['x'])
+    results = ParseWorkflow({'rules': stubOptions}).dataToData(['x'])
 
     assert results[0]['xml'] == '<stub>x</stub>'
 
@@ -85,7 +85,7 @@ def test_settings_from_constructor_are_used(stubOptions):
 def test_process_data_writes_results_when_output_is_requested(tmp_path, stubOptions):
     output = tmp_path / 'parsed.csv'
 
-    results = ParseWorkflow().processData(['x'], str(output), stubOptions)
+    results = ParseWorkflow().processData(['x'], str(output), {'rules': stubOptions})
 
     with output.open(newline='') as file:
         row = next(csv.DictReader(file))
@@ -96,7 +96,7 @@ def test_process_data_writes_results_when_output_is_requested(tmp_path, stubOpti
 # The real DIO parser is registered for ebnf + dio and keeps the result shape without crashing; its output quality is deliberately not tested here.
 def test_dio_is_registered_and_returns_result_shape():
     # Interface only: the output quality of the DIO parser is not tested here
-    results = ParseWorkflow().dataToData(['anno domini'], {'formalism': 'ebnf', 'dialect': 'dio'})
+    results = ParseWorkflow().dataToData(['anno domini'], {'rules': {'formalism': 'ebnf', 'dialect': 'dio'}})
 
     assert len(results) == 1
     assert set(results[0].keys()) == {'xml', 'errors', 'failed'}
@@ -112,21 +112,21 @@ def test_generic_parser_client_loads_transform_for_formalism_and_dialect():
 
 # Notices and warnings do not fail an input, so harmless remarks do not turn a clean batch into MIXED.
 def test_notices_and_warnings_do_not_fail_the_input(levelOptions):
-    results = ParseWorkflow().dataToData(['ok', 'notice', 'warning'], levelOptions)
+    results = ParseWorkflow().dataToData(['ok', 'notice', 'warning'], {'rules': levelOptions})
 
     assert [r['failed'] for r in results] == [False, False, False]
 
 
 # Error and fatal entries fail an input, so callers can find the inscriptions that did not parse.
 def test_error_and_fatal_fail_the_input(levelOptions):
-    results = ParseWorkflow().dataToData(['error', 'fatal'], levelOptions)
+    results = ParseWorkflow().dataToData(['error', 'fatal'], {'rules': levelOptions})
 
     assert [r['failed'] for r in results] == [True, True]
 
 
 # Error entries keep level, code, line, column and message unchanged, so users can locate the problem in their text.
 def test_errors_keep_their_fields(levelOptions):
-    result = ParseWorkflow().dataToData(['warning'], levelOptions)[0]
+    result = ParseWorkflow().dataToData(['warning'], {'rules': levelOptions})[0]
 
     assert result['errors'] == [
         {'level': 'warning', 'code': 1, 'line': 2, 'column': 3, 'message': 'msg'}
@@ -135,7 +135,7 @@ def test_errors_keep_their_fields(levelOptions):
 
 # A partial XML tree is returned together with the errors, so users can see how far parsing got.
 def test_partial_xml_is_kept_when_errors_occur(levelOptions):
-    result = ParseWorkflow().dataToData(['error'], levelOptions)[0]
+    result = ParseWorkflow().dataToData(['error'], {'rules': levelOptions})[0]
 
     assert result['failed'] is True
     assert result['xml'] == '<partial>error</partial>'
@@ -143,7 +143,7 @@ def test_partial_xml_is_kept_when_errors_occur(levelOptions):
 
 # Each input gets its own failed flag in a mixed batch, so one bad inscription does not hide the good ones.
 def test_mixed_batch_has_a_flag_per_input(levelOptions):
-    results = ParseWorkflow().dataToData(['ok', 'error', 'warning', 'fatal'], levelOptions)
+    results = ParseWorkflow().dataToData(['ok', 'error', 'warning', 'fatal'], {'rules': levelOptions})
 
     assert [r['failed'] for r in results] == [False, True, False, True]
 
@@ -151,19 +151,19 @@ def test_mixed_batch_has_a_flag_per_input(levelOptions):
 # A missing formalism is rejected with a message naming the field, so a client notices the mistake instead of getting wrong results.
 def test_missing_formalism_is_rejected(stubOptions):
     with pytest.raises(ValueError, match="formalism"):
-        ParseWorkflow().dataToData(['a'], {'dialect': 'test'})
+        ParseWorkflow().dataToData(['a'], {'rules': {'dialect': 'test'}})
 
 
 # A missing dialect is rejected with a message naming the field, so a text is never silently parsed with a default Dialect.
 def test_missing_dialect_is_rejected(stubOptions):
     with pytest.raises(ValueError, match="dialect"):
-        ParseWorkflow().dataToData(['a'], {'formalism': 'stub'})
+        ParseWorkflow().dataToData(['a'], {'rules': {'formalism': 'stub'}})
 
 
 # A pair without a parser is rejected and the message names the pair, so users see which combination is not supported.
 def test_unknown_pair_is_rejected_with_the_pair_in_the_message(stubOptions):
     with pytest.raises(ValueError, match="ebnf.*isodate"):
-        ParseWorkflow().dataToData(['a'], {'formalism': 'ebnf', 'dialect': 'isodate'})
+        ParseWorkflow().dataToData(['a'], {'rules': {'formalism': 'ebnf', 'dialect': 'isodate'}})
 
 
 # The parser list can be asked whether a pair is known, so the server can reject a request at submission before starting any task.
@@ -173,15 +173,41 @@ def test_parser_list_can_be_queried(stubOptions):
     assert has_parser('ebnf', 'isodate') is False
 
 
-# The rules option has no effect on the result, so clients can already send it before it is processed.
-def test_rules_are_accepted_and_ignored(stubOptions):
-    withoutRules = ParseWorkflow().dataToData(['a'], stubOptions)
-    withRules = ParseWorkflow().dataToData(['a'], {**stubOptions, 'rules': {'any': ['value']}})
+def test_rules_configure_workflow_and_can_be_overridden(stubOptions, levelOptions):
+    wf = ParseWorkflow(rules=stubOptions)
 
-    assert withRules == withoutRules
+    assert wf.dataToData('a')[0]['xml'] == '<stub>a</stub>'
+    assert wf.dataToData('warning', {'rules': levelOptions})[0]['xml'] == '<partial>warning</partial>'
+    assert wf.dataToData('a')[0]['xml'] == '<stub>a</stub>'
 
 
-# The rules option reaches the parser client unchanged, so a later phase can use it without changing the interface.
+def test_direct_options_do_not_change_parser_selected_by_rules(stubOptions, levelOptions):
+    result = ParseWorkflow().dataToData('warning', {**stubOptions, 'rules': levelOptions})
+
+    assert result[0]['xml'] == '<partial>warning</partial>'
+
+
+def test_direct_options_cannot_select_parser(stubOptions):
+    with pytest.raises(ValueError, match='rules'):
+        ParseWorkflow().dataToData('a', stubOptions)
+
+
+def test_direct_options_cannot_fill_missing_rules(stubOptions):
+    with pytest.raises(ValueError, match='dialect'):
+        ParseWorkflow().dataToData('a', {**stubOptions, 'rules': {'formalism': 'stub'}})
+
+
+def test_call_rules_replace_constructor_rules(stubOptions):
+    with pytest.raises(ValueError, match='dialect'):
+        ParseWorkflow(rules=stubOptions).dataToData('a', {'rules': {'formalism': 'stub'}})
+
+
+@pytest.mark.parametrize('rules', ['stub', [], 1])
+def test_invalid_rules_are_rejected(rules):
+    with pytest.raises(ValueError, match='rules.*dict'):
+        ParseWorkflow(rules=rules).dataToData('a')
+
+
 def test_rules_are_passed_to_the_parser_client(stubOptions):
     class RecordingParserClient(StubParserClient):
         received = []
@@ -191,14 +217,14 @@ def test_rules_are_passed_to_the_parser_client(stubOptions):
             return super().answer(content)
 
     register_parser('stub', 'test', RecordingParserClient)
-    ParseWorkflow().dataToData(['a'], {**stubOptions, 'rules': {'x': 1}})
+    ParseWorkflow().dataToData(['a'], {'rules': stubOptions})
 
-    assert RecordingParserClient.received == [{'x': 1}]
+    assert RecordingParserClient.received == [stubOptions]
 
 
 # A valid pair works, so the checks do not block correct requests.
 def test_valid_pair_works(stubOptions):
-    assert ParseWorkflow().dataToData(['a'], stubOptions)[0]['xml'] == '<stub>a</stub>'
+    assert ParseWorkflow().dataToData(['a'], {'rules': stubOptions})[0]['xml'] == '<stub>a</stub>'
 
 
 # A single-line text is parsed as source text and never taken for a file name, so inputs cannot make the parser load files.
@@ -206,7 +232,7 @@ def test_dio_never_takes_a_single_line_text_for_a_file_name(tmp_path):
     secret = tmp_path / 'secret.txt'
     secret.write_text('SECRET-CONTENT')
 
-    results = ParseWorkflow().dataToData(['anno domini', str(secret)], {'formalism': 'ebnf', 'dialect': 'dio'})
+    results = ParseWorkflow().dataToData(['anno domini', str(secret)], {'rules': {'formalism': 'ebnf', 'dialect': 'dio'}})
 
     for result in results:
         assert 'File not found' not in str(result['errors'])

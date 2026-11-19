@@ -7,7 +7,7 @@ from xml.etree.ElementTree import canonicalize
 from databoard_core.flows import ParseWorkflow
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'dio'
-DIO = {'formalism': 'ebnf', 'dialect': 'dio'}
+DIO = {'rules': {'formalism': 'ebnf', 'dialect': 'dio'}}
 
 
 def readFixture(name):
@@ -66,7 +66,7 @@ def test_parser_configuration_applies_in_fresh_process():
         "import json, sys\n"
         "from databoard_core.flows import ParseWorkflow\n"
         "text = open(sys.argv[1], encoding='utf-8').read().replace('\\u2219', '\\u0387', 1)\n"
-        "print(json.dumps(ParseWorkflow().dataToData(text, {'formalism': 'ebnf', 'dialect': 'dio'})[0]))\n"
+        "print(json.dumps(ParseWorkflow().dataToData(text, {'rules': {'formalism': 'ebnf', 'dialect': 'dio'}})[0]))\n"
     )
     output = subprocess.run([sys.executable, '-c', script, str(FIXTURES / 'test_inscription.txt')],
                             capture_output=True, text=True, check=True).stdout
