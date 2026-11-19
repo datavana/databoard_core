@@ -50,7 +50,7 @@ class ParseWorkflow:
 
         parserClass = clients.get_parser_class(settings['formalism'], settings['dialect'])
         client = parserClass()
-        client.settings['rules'] = settings.get('rules')
+        client.settings.update(settings)
 
         return [self.buildResult(client.answer(text)) for text in input]
 

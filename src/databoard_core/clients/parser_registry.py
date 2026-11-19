@@ -1,4 +1,4 @@
-from databoard_core.clients.parser_dio import DioParserClient
+from databoard_core.clients.parser import ParserClient
 
 # Maps (formalism, dialect) to a parser client class
 _parsers = {}
@@ -48,4 +48,4 @@ def get_parser_class(formalism, dialect):
         raise ValueError(f"No parser for formalism '{formalism}' and dialect '{dialect}'")
 
 
-register_parser('ebnf', 'dio', DioParserClient)
+register_parser('ebnf', 'dio', ParserClient)
